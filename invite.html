@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دعوتنامه اختصاصی حضور | مهمان گرامی</title>
+    <!-- فونت و تیلویند -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f8fafc; }
+        .time-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .time-option input:checked + .time-card {
+            border-color: #0f172a;
+            background-color: #f8fafc;
+            box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+        }
+        .time-option input:checked + .time-card .check-circle {
+            border-color: #0f172a;
+            background-color: #0f172a;
+        }
+        .time-option input:checked + .time-card .check-dot {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 text-slate-800">
+
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-sm border border-slate-100 p-8 sm:p-10 relative overflow-hidden text-center">
+        
+        <!-- وضعیت در حال بارگذاری -->
+        <div id="loadingState" class="py-12">
+            <div class="animate-pulse flex flex-col items-center">
+                <div class="h-14 w-14 bg-slate-100 rounded-2xl mb-4"></div>
+                <div class="h-5 w-40 bg-slate-100 rounded-lg mb-3"></div>
+                <div class="h-4 w-56 bg-slate-100 rounded-lg"></div>
+            </div>
+            <p class="text-xs text-slate-400 mt-6">در حال فراخوانی اطلاعات دعوتنامه اختصاصی...</p>
+        </div>
+
+        <!-- وضعیت خطا -->
+        <div id="errorState" class="hidden py-10">
+            <div class="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl mx-auto flex items-center justify-center mb-4 border border-rose-100">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h2 class="text-xl font-black text-slate-900 mb-2">دعوتنامه در دسترس نیست</h2>
+            <p id="errorMsg" class="text-sm text-slate-500 leading-relaxed">این لینک دعوت منقضی شده یا قبلاً استفاده گردیده است.</p>
+        </div>
+
+        <!-- وضعیت ثبت موفق -->
+        <div id="successState" class="hidden py-10">
+            <div class="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl mx-auto flex items-center justify-center mb-5 border border-emerald-100 shadow-sm shadow-emerald-50">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 mb-2">مشتاقانه منتظر دیدارتان هستیم!</h2>
+            <p class="text-sm text-slate-500 leading-relaxed mb-6">زمان انتخابی شما با موفقیت در تقویم میزبان ثبت شد.</p>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs text-slate-600">
+                پیامک تایید نهایی و جزییات به شماره همراه شما ارسال شد.
+            </div>
+        </div>
+
+        <!-- فرم اصلی دعوتنامه -->
+        <div id="formState" class="hidden text-right">
+            <div class="text-center mb-8">
+                <div class="inline-block px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-full border border-amber-200/60 mb-3">
+                    ✨ دعوتنامه اختصاصی VIP
+                </div>
+                <h1 class="text-2xl font-black text-slate-900 mb-2">سلام <span id="guestNameDisplay" class="text-slate-900 underline decoration-amber-400 decoration-wavy underline-offset-4"></span> عزیز!</h1>
+                <p class="text-xs text-slate-500 leading-relaxed">خوشحال می‌شویم در این روزها میزبان شما باشیم. لطفاً زمانی که براتون مناسب‌تر هست رو انتخاب فرمایید:</p>
+            </div>
+
+            <form id="inviteForm" class="space-y-6">
+                <!-- کانتینر گزینه‌های زمانی پیشنهادی -->
+                <div class="space-y-2.5">
+                    <label class="block text-xs font-bold text-slate-700 mb-2">زمان‌های پیشنهادی میزبان:</label>
+                    <div id="timeOptionsContainer" class="space-y-2.5"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">شماره همراه شما (جهت ارسال پیامک هماهنگی) <span class="text-rose-500">*</span></label>
+                    <input type="tel" id="guest_phone" required pattern="^09[0-9]{9}$" maxlength="11" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-left focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none text-sm font-mono placeholder-slate-400" placeholder="09123456789" dir="ltr">
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-[0.99] text-sm">
+                    تایید و ثبت نهایی زمان
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-100 text-center text-xs text-slate-400">
+            سیستم هوشمند مدیریت مهمان خانواده
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = (window.location.port === '8000' || window.location.pathname.startsWith('/api'))
+            ? '' 
+            : 'https://guest-managment-app.onrender.com/api/invite/' + token;
+
+        function toEnglishDigits(str) {
+            if (!str) return '';
+            const fa = '۰۱۲۳۴۵۶۷۸۹';
+            const ar = '٠١٢٣٤٥٦٧٨٩';
+            let res = String(str);
+            for (let i = 0; i < 10; i++) {
+                res = res.replaceAll(fa[i], i).replaceAll(ar[i], i);
+            }
+            return res;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        const DOM = {
+            loading: document.getElementById('loadingState'),
+            error: document.getElementById('errorState'),
+            errorMsg: document.getElementById('errorMsg'),
+            success: document.getElementById('successState'),
+            form: document.getElementById('formState'),
+            guestName: document.getElementById('guestNameDisplay'),
+            optionsContainer: document.getElementById('timeOptionsContainer'),
+            inviteForm: document.getElementById('inviteForm'),
+            submitBtn: document.getElementById('submitBtn'),
+            phoneInput: document.getElementById('guest_phone')
+        };
+
+        DOM.phoneInput.addEventListener('input', (e) => {
+            e.target.value = toEnglishDigits(e.target.value).replace(/[^0-9]/g, '');
+        });
+
+        function showState(stateElement) {
+            [DOM.loading, DOM.error, DOM.success, DOM.form].forEach(el => el.classList.add('hidden'));
+            stateElement.classList.remove('hidden');
+        }
+
+        let loadedSlots = [];
+
+        // واکشی اطلاعات دعوتنامه
+        async function fetchInvitationInfo() {
+            if (!token) {
+                DOM.errorMsg.innerText = "توکن دعوتنامه در آدرس صفحه مشخص نشده است.";
+                showState(DOM.error);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/invite/${token}/`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    DOM.guestName.innerText = data.guest_name;
+                    if (data.guest_phone) {
+                        DOM.phoneInput.value = data.guest_phone;
+                    }
+                    
+                    loadedSlots = data.slots || [];
+                    DOM.optionsContainer.innerHTML = '';
+
+                    if (loadedSlots.length === 0) {
+                        DOM.optionsContainer.innerHTML = '<div class="text-xs text-rose-500 p-3 bg-rose-50 rounded-xl">زمانی برای این دعوتنامه تعریف نشده است.</div>';
+                    }
+
+                    loadedSlots.forEach((slot, index) => {
+                        const isChecked = index === 0 ? 'checked' : '';
+                        const labelText = slot.label || slot;
+                        const startVal = slot.start || '';
+
+                        const html = `
+                            <label class="time-option block cursor-pointer">
+                                <input type="radio" name="selected_slot_index" value="${index}" data-start="${startVal}" data-label="${labelText}" class="hidden" ${isChecked} required>
+                                <div class="time-card border border-slate-200 rounded-2xl p-4 flex items-center justify-between hover:bg-slate-50/80">
+                                    <div class="flex items-center gap-3">
+                                        <div class="check-circle w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center transition-colors">
+                                            <div class="check-dot w-2 h-2 rounded-full bg-white opacity-0 transition-opacity"></div>
+                                        </div>
+                                        <span class="text-sm font-bold text-slate-800">${labelText}</span>
+                                    </div>
+                                    <span class="text-xs text-slate-400 font-medium">انتخاب</span>
+                                </div>
+                            </label>
+                        `;
+                        DOM.optionsContainer.insertAdjacentHTML('beforeend', html);
+                    });
+
+                    showState(DOM.form);
+                } else {
+                    DOM.errorMsg.innerText = data.error || "این دعوتنامه منقضی شده یا قبلاً استفاده گردیده است.";
+                    showState(DOM.error);
+                }
+            } catch (err) {
+                DOM.errorMsg.innerText = "خطا در برقراری ارتباط با سرور. لطفاً از فعال بودن سرور مطمئن شوید.";
+                showState(DOM.error);
+            }
+        }
+
+        // ارسال فرم ثبت نهایی
+        DOM.inviteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            DOM.submitBtn.disabled = true;
+            DOM.submitBtn.innerText = 'در حال ثبت نهایی...';
+
+            const selectedRadio = document.querySelector('input[name="selected_slot_index"]:checked');
+            if (!selectedRadio) {
+                alert("لطفاً یکی از زمان‌های پیشنهادی را انتخاب فرمایید.");
+                DOM.submitBtn.disabled = false;
+                DOM.submitBtn.innerText = 'تایید و ثبت نهایی زمان';
+                return;
+            }
+
+            const slotIndex = parseInt(selectedRadio.value);
+            const slotObj = loadedSlots[slotIndex] || {};
+            const phone = toEnglishDigits(DOM.phoneInput.value.trim());
+
+            const payload = {
+                phone: phone,
+                selected_time: selectedRadio.dataset.label,
+                start_iso: selectedRadio.dataset.start || (slotObj.start || null),
+                duration_hours: slotObj.duration_hours || 2,
+                selected_slot: slotObj
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/invite/${token}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showState(DOM.success);
+                } else {
+                    alert(data.error || "خطایی در ثبت زمان رخ داد.");
+                    DOM.submitBtn.disabled = false;
+                    DOM.submitBtn.innerText = 'تایید و ثبت نهایی زمان';
+                }
+            } catch (err) {
+                alert("خطا در برقراری ارتباط با سرور.");
+                DOM.submitBtn.disabled = false;
+                DOM.submitBtn.innerText = 'تایید و ثبت نهایی زمان';
+            }
+        });
+
+        fetchInvitationInfo();
+    </script>
+</body>
+</html>
